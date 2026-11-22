@@ -7,7 +7,8 @@ import {
   CONTRACTS,
 } from './engine.js';
 
-const STORAGE_KEY = 'na-reke:v1';
+// v2: od tej wersji pole brutto startuje puste (wcześniej płaca minimalna)
+const STORAGE_KEY = 'na-reke:v2';
 const AGE_MIN = 15;
 const AGE_MAX = 99;
 const UPDATE_CHECK_EVERY_MS = 60 * 60 * 1000;
@@ -15,7 +16,7 @@ const UPDATE_CHECK_EVERY_MS = 60 * 60 * 1000;
 const DEFAULTS = {
   age: 30,
   contract: 'employment',
-  gross: String(P.minimumWage / 100),
+  gross: '',
   bonus: '',
   bonusMode: 'once',
   pit2: { employment: true, mandate: false, work: false },
