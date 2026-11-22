@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="description" content="Kalkulator wypłaty netto: ile naprawdę dostaniesz na rękę z umowy o pracę, zlecenia lub o dzieło.">
+  <meta name="theme-color" content="#f2f2f7" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Na rękę">
+  <meta name="format-detection" content="telephone=no">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="stylesheet" href="css/styles.css">
+  <title>Na rękę</title>
+  <script type="module" src="js/app.js"></script>
+</head>
+<body>
+  <div class="mini" id="mini" aria-hidden="true">
+    <span>Na rękę</span>
+    <strong id="miniAmount">0,00 zł</strong>
+  </div>
+
+  <main class="app">
+    <header class="top">
+      <h1>Na rękę</h1>
+      <p class="subtitle">Ile naprawdę dostaniesz z wypłaty · stawki <span id="yearLabel">2026</span></p>
+    </header>
+
+    <section class="hero" id="hero" aria-live="polite">
+      <p class="hero-label" id="heroLabel">Dostaniesz na rękę co miesiąc</p>
+      <p class="hero-amount" id="netAmount">0,00 zł</p>
+      <p class="hero-sub" id="netSub">Wpisz wynagrodzenie brutto</p>
+    </section>
+
+    <section class="card">
+      <h2>O Tobie</h2>
+      <div class="field-row">
+        <label for="age">Wiek</label>
+        <div class="stepper">
+          <button type="button" class="step" data-step="-1" aria-label="Mniej lat">−</button>
+          <input id="age" type="number" inputmode="numeric" min="15" max="99" value="30" aria-describedby="ageHint">
+          <button type="button" class="step" data-step="1" aria-label="Więcej lat">+</button>
+        </div>
+      </div>
+      <div class="field-row">
+        <label for="country">Kraj</label>
+        <div class="select-wrap">
+          <select id="country">
+            <option value="PL" selected>Polska</option>
+          </select>
+        </div>
+      </div>
+      <p class="hint" id="ageHint">Na razie tylko Polska. Wiek decyduje o uldze dla młodych i dla seniorów.</p>
+    </section>
+
+    <section class="card">
+      <h2>Rodzaj umowy</h2>
+      <div class="segmented" role="radiogroup" aria-label="Rodzaj umowy" id="contract">
+        <button type="button" role="radio" data-value="employment" aria-checked="true">O pracę</button>
+        <button type="button" role="radio" data-value="mandate" aria-checked="false">Zlecenie</button>
+        <button type="button" role="radio" data-value="work" aria-checked="false">O dzieło</button>
+      </div>
+      <p class="hint" id="contractHint"></p>
+    </section>
+
+    <section class="card">
+      <h2>Wynagrodzenie</h2>
+      <label class="money-label" for="gross" id="grossLabel">Brutto miesięcznie</label>
+      <div class="money">
+        <input id="gross" type="text" inputmode="decimal" autocomplete="off" placeholder="0" enterkeyhint="done">
+        <span class="currency">zł</span>
+      </div>
+      <div class="chips">
+        <button type="button" class="chip" id="minWageChip">Płaca minimalna</button>
+      </div>
+
+      <div class="divider"></div>
+
+      <label class="money-label" for="bonus">Premia brutto <span class="optional">opcjonalnie</span></label>
+      <div class="money money-small">
+        <input id="bonus" type="text" inputmode="decimal" autocomplete="off" placeholder="0" enterkeyhint="done">
+        <span class="currency">zł</span>
+      </div>
+      <p class="field-error" id="bonusError" hidden>Nie rozpoznaję tej kwoty. Wpisz np. 1000 albo 1000,50</p>
+      <div class="segmented segmented-small" role="radiogroup" aria-label="Jak często premia" id="bonusMode">
+        <button type="button" role="radio" data-value="once" aria-checked="true">Jednorazowo</button>
+        <button type="button" role="radio" data-value="monthly" aria-checked="false">Co miesiąc</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Twoja sytuacja</h2>
+      <div class="badge" id="reliefBadge" hidden></div>
+
+      <label class="toggle" data-for="employment mandate work">
+        <span class="toggle-text">
+          <span class="toggle-title">Kwota wolna (PIT-2)</span>
+          <span class="toggle-desc" id="pit2Desc"></span>
+        </span>
+        <input type="checkbox" class="switch" id="pit2">
+      </label>
+
+      <label class="toggle" data-for="employment">
+        <span class="toggle-text">
+          <span class="toggle-title">Dojeżdżam z innej miejscowości</span>
+          <span class="toggle-desc">Koszty uzyskania przychodu 300 zł zamiast 250 zł, gdy mieszkasz poza miejscowością, w której pracujesz.</span>
+        </span>
+        <input type="checkbox" class="switch" id="increasedCosts">
+      </label>
+
+      <label class="toggle" data-for="employment">
+        <span class="toggle-text">
+          <span class="toggle-title">Oszczędzam w PPK</span>
+          <span class="toggle-desc">Odkładasz 2% pensji, pracodawca dokłada 1,5%. Od jego dopłaty płacisz podatek.</span>
+        </span>
+        <input type="checkbox" class="switch" id="ppk">
+      </label>
+
+      <label class="toggle" data-for="mandate" data-young>
+        <span class="toggle-text">
+          <span class="toggle-title">Uczę się lub studiuję</span>
+          <span class="toggle-desc">Do 26 lat na zleceniu nie płacisz ZUS ani składki zdrowotnej.</span>
+        </span>
+        <input type="checkbox" class="switch" id="student">
+      </label>
+
+      <label class="toggle" data-for="mandate" data-not-student>
+        <span class="toggle-text">
+          <span class="toggle-title">Ubezpieczenie chorobowe</span>
+          <span class="toggle-desc">Na zleceniu dobrowolne (2,45%). Daje prawo do płatnego L4.</span>
+        </span>
+        <input type="checkbox" class="switch" id="voluntarySickness">
+      </label>
+
+      <label class="toggle" data-for="work">
+        <span class="toggle-text">
+          <span class="toggle-title">Przenoszę prawa autorskie</span>
+          <span class="toggle-desc">Koszty 50% zamiast 20%, np. za program, grafikę lub tekst. Limit 120 000 zł kosztów w roku.</span>
+        </span>
+        <input type="checkbox" class="switch" id="copyright">
+      </label>
+
+      <label class="toggle" data-for="mandate work" data-small>
+        <span class="toggle-text">
+          <span class="toggle-title">Cała umowa jest na kwotę do 200 zł</span>
+          <span class="toggle-desc">Wtedy płatnik pobiera stały podatek 12%. Wyłącz, jeśli to rata większej umowy (np. 150 zł co miesiąc przez rok). Podatek liczy się wtedy normalnie, z kosztami i PIT-2.</span>
+        </span>
+        <input type="checkbox" class="switch" id="smallContract">
+      </label>
+
+      <label class="toggle" data-for="employment mandate" data-senior>
+        <span class="toggle-text">
+          <span class="toggle-title">Ulga dla pracujących seniorów</span>
+          <span class="toggle-desc">Kobiety od 60 lat, mężczyźni od 65, którzy nie pobierają emerytury ani renty. Płatnik stosuje ją na Twój wniosek.</span>
+        </span>
+        <input type="checkbox" class="switch" id="seniorRelief">
+      </label>
+    </section>
+
+    <section class="card" id="breakdownCard">
+      <h2 id="breakdownTitle">Co schodzi z wypłaty</h2>
+      <p class="hint hint-top" id="breakdownHint" hidden>W kolejnych miesiącach kwoty się zmieniają. Szczegóły znajdziesz niżej, w „W skali roku”.</p>
+      <div class="bar" id="bar" role="img" aria-label="Podział wypłaty brutto"></div>
+      <ul class="breakdown" id="breakdown"></ul>
+      <details class="steps" id="taxSteps">
+        <summary>Jak wyliczono podatek</summary>
+        <div class="steps-body" id="taxStepsBody"></div>
+      </details>
+    </section>
+
+    <section class="card" id="bonusCard" hidden>
+      <h2>Premia</h2>
+      <p class="bonus-line" id="bonusLine"></p>
+      <p class="hint" id="bonusHint"></p>
+    </section>
+
+    <section class="card" id="yearCard">
+      <h2>W skali roku</h2>
+      <div class="stats">
+        <div class="stat">
+          <span class="stat-label">Brutto</span>
+          <span class="stat-value" id="yearGross">0,00 zł</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">Na rękę</span>
+          <span class="stat-value accent" id="yearNet">0,00 zł</span>
+        </div>
+      </div>
+      <p class="year-after" id="yearAfter" hidden></p>
+      <div class="notes" id="yearNotes"></div>
+      <details class="steps" id="monthsDetails">
+        <summary>Miesiąc po miesiącu</summary>
+        <table class="months">
+          <thead><tr><th>Miesiąc</th><th>Brutto</th><th>Na rękę</th></tr></thead>
+          <tbody id="monthsBody"></tbody>
+        </table>
+      </details>
+    </section>
+
+    <section class="card">
+      <details class="steps about">
+        <summary>Skąd te liczby?</summary>
+        <div class="steps-body" id="about"></div>
+      </details>
+    </section>
+
+    <footer class="foot">
+      <p>Kwoty to zaliczki pobierane przy wypłacie. Ostateczny podatek wychodzi w zeznaniu rocznym (PIT-37). Kalkulator działa tylko na Twoim telefonie, nic nie jest nigdzie wysyłane.</p>
+    </footer>
+  </main>
+</body>
+</html>
