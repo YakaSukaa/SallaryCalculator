@@ -9,7 +9,7 @@
 // zmień VERSION poniżej — inaczej telefon zostanie przy starej wersji.
 
 const PREFIX = 'na-reke-';
-const VERSION = `${PREFIX}2026-11-24-9`;
+const VERSION = `${PREFIX}2026-11-24-10`;
 const ASSETS = [
   './',
   './index.html',

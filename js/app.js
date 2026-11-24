@@ -159,7 +159,7 @@ function syncOptions(r) {
     } else {
       badge.append(
         el('strong', '', 'Ulga dla młodych: '),
-        `nie płacisz podatku od przychodu do ${formatPLN(P.reliefAnnualLimit)} w roku. Działa automatycznie do dnia 26. urodzin.`,
+        `nie płacisz podatku od przychodu do ${formatPLN(P.reliefAnnualLimit)} w roku.`,
       );
       if (inp.studentExempt) {
         badge.append(' Ucząc się lub studiując, nie płacisz też ZUS ani składki zdrowotnej, więc brutto = netto.');
