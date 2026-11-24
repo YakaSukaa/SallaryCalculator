@@ -126,6 +126,20 @@ function syncOptions(r) {
 
   $('pit2').checked = Boolean(state.pit2[inp.contract]);
   $('pit2Desc').textContent = PIT2_DESC[inp.contract];
+
+  // Gdy ulga zwalnia całą wypłatę z podatku, PIT-2 i koszty dojazdu nic nie zmieniają.
+  const exemptNow = r.regular.taxMode === 'exempt';
+  const reliefName = inp.youthRelief ? 'uldze dla młodych' : 'uldze dla seniorów';
+  for (const id of ['pit2', 'increasedCosts']) {
+    const row = $(id).closest('.toggle');
+    let note = row.querySelector('.toggle-note');
+    if (!note) {
+      note = el('span', 'toggle-note');
+      row.querySelector('.toggle-text').append(note);
+    }
+    note.textContent = `Teraz nie zmienia kwoty: dzięki ${reliefName} podatek wynosi 0 zł.`;
+    note.hidden = !exemptNow;
+  }
   $('contractHint').textContent = CONTRACT_HINTS[inp.contract];
   $('ageHint').textContent = state.age >= AGE_MIN
     ? 'Na razie tylko Polska. Wiek decyduje o uldze dla młodych i dla seniorów.'

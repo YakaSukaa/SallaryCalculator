@@ -909,3 +909,9 @@ select {
     transition: none !important;
   }
 }
+
+.toggle-note {
+  font-size: 13px;
+  color: var(--accent-strong);
+  line-height: 1.35;
+}
