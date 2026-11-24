@@ -9,10 +9,12 @@ import {
 // v2: od tej wersji pole brutto startuje puste (wcześniej płaca minimalna)
 const STORAGE_KEY = 'na-reke:v2';
 const AGE_MIN = 15;
+const NO_AGE = 30; // wiek, przy którym nie działa żadna ulga zależna od wieku
+const FIRST_STEP_AGE = 18;
 const AGE_MAX = 99;
 
 const DEFAULTS = {
-  age: 30,
+  age: 0, // 0 = wiek niewpisany
   contract: 'employment',
   gross: '',
   bonus: '',
@@ -66,7 +68,8 @@ const state = { ...DEFAULTS, pit2: { ...DEFAULTS.pit2 } };
 
 function rawInput(gross, bonus) {
   return {
-    age: state.age,
+    // bez wpisanego wieku liczymy bez ulg zależnych od wieku
+    age: state.age >= AGE_MIN ? state.age : NO_AGE,
     contract: state.contract,
     gross: gross.grosze,
     bonus: bonus.grosze,
@@ -124,6 +127,9 @@ function syncOptions(r) {
   $('pit2').checked = Boolean(state.pit2[inp.contract]);
   $('pit2Desc').textContent = PIT2_DESC[inp.contract];
   $('contractHint').textContent = CONTRACT_HINTS[inp.contract];
+  $('ageHint').textContent = state.age >= AGE_MIN
+    ? 'Na razie tylko Polska. Wiek decyduje o uldze dla młodych i dla seniorów.'
+    : 'Wpisz wiek: od niego zależy ulga dla młodych (do 26 lat) i dla seniorów.';
   $('grossLabel').textContent = GROSS_LABELS[inp.contract];
 
   const badge = $('reliefBadge');
@@ -513,15 +519,16 @@ function setupAge() {
   });
   age.addEventListener('change', () => {
     const n = Math.round(Number(age.value));
-    if (age.value.trim() !== '' && Number.isFinite(n)) {
-      state.age = Math.min(AGE_MAX, Math.max(AGE_MIN, n));
-    }
-    age.value = String(state.age); // puste pole: wracamy do ostatniego poprawnego wieku
+    if (age.value.trim() === '' || !Number.isFinite(n) || n <= 0) state.age = 0;
+    else state.age = Math.min(AGE_MAX, Math.max(AGE_MIN, n));
+    age.value = String(state.age);
     update();
   });
   document.querySelectorAll('.step').forEach((btn) => {
     btn.addEventListener('click', () => {
-      state.age = Math.min(AGE_MAX, Math.max(AGE_MIN, state.age + Number(btn.dataset.step)));
+      const step = Number(btn.dataset.step);
+      if (state.age < AGE_MIN) state.age = step > 0 ? FIRST_STEP_AGE : 0;
+      else state.age = Math.min(AGE_MAX, Math.max(AGE_MIN, state.age + step));
       age.value = String(state.age);
       update();
     });
