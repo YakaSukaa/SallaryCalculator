@@ -427,19 +427,6 @@ function bonusView(r) {
     ` na rękę (${share(b.net, b.gross)}).`,
   );
 
-  const inp = r.input;
-  let how;
-  if (inp.contract === 'work') how = 'Premia jest opodatkowana tak samo jak reszta wynagrodzenia z umowy o dzieło.';
-  else if (inp.studentExempt) how = 'Premia jest liczona tak samo jak reszta wynagrodzenia ze zlecenia.';
-  else how = 'Premia jest oskładkowana i opodatkowana tak samo jak reszta wynagrodzenia.';
-
-  const parts = [`Zakładamy, że premia przyjdzie w styczniu: wypłata wyniesie wtedy ${formatPLN(b.monthNet)}.`, how];
-  if (Math.abs(b.monthDelta - b.net) >= 100) {
-    parts.push(
-      `Na samym pasku styczniowym premia daje ${formatPLN(b.monthDelta)}, ale przez nią szybciej dojdziesz do progu lub limitu, więc kolejne wypłaty będą trochę niższe.`,
-    );
-  }
-  $('bonusHint').textContent = parts.join(' ');
 }
 
 function yearView(r) {
@@ -480,10 +467,6 @@ function yearView(r) {
           '. Wynik roczny zakłada ulgę przez cały rok, więc realnie będzie niższy.',
       ),
     );
-  }
-
-  if (!r.year.varies && r.regular.gross > 0) {
-    notes.append(el('div', 'note', `Każdy miesiąc wygląda tak samo: ${formatPLN(r.regular.net)} na rękę.`));
   }
 
 }
@@ -644,16 +627,23 @@ function init() {
     update();
   });
 
-  $('pit2').addEventListener('change', (e) => {
-    state.pit2[state.contract] = e.target.checked;
-    update();
+  // 'input' i 'change' — na iPhonie przełącznik zawsze od razu przelicza wynik
+  const onToggle = (box, apply) => {
+    const handler = () => {
+      apply(box.checked);
+      update();
+    };
+    box.addEventListener('input', handler);
+    box.addEventListener('change', handler);
+  };
+  onToggle($('pit2'), (on) => {
+    state.pit2[state.contract] = on;
   });
   TOGGLES.forEach((key) => {
     const box = $(key);
     box.checked = Boolean(state[key]);
-    box.addEventListener('change', () => {
-      state[key] = box.checked;
-      update();
+    onToggle(box, (on) => {
+      state[key] = on;
     });
   });
 
