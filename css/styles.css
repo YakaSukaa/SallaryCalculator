@@ -915,3 +915,58 @@ select {
   color: var(--accent-strong);
   line-height: 1.35;
 }
+
+.de-name {
+  color: var(--muted);
+  font-size: 0.85em;
+  font-weight: 400;
+}
+
+.field-row > label {
+  flex: 0 1 auto;
+  min-width: 0;
+  line-height: 1.2;
+}
+
+.field-row > .pct-input,
+.field-row > .stepper {
+  flex: none;
+}
+
+.field-row .de-name,
+.toggle-title .de-name,
+.b-title .de-name {
+  display: block;
+  font-size: 13px;
+}
+
+.field-row .select-wrap {
+  min-width: 0;
+}
+
+.select-wrap select {
+  max-width: 100%;
+  text-overflow: ellipsis;
+}
+
+.pct-input {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  background: var(--control);
+  border-radius: 12px;
+  padding: 8px 12px;
+}
+
+.pct-input input {
+  width: 56px;
+  border: 0;
+  background: transparent;
+  text-align: right;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.pct-input input:focus {
+  outline: none;
+}

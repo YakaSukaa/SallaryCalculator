@@ -52,12 +52,13 @@
         <div class="select-wrap">
           <select id="country">
             <option value="PL" selected>Polska</option>
+            <option value="DE">Niemcy</option>
           </select>
         </div>
       </div>
     </section>
 
-    <section class="card">
+    <section class="card pl-only">
       <h2>Rodzaj umowy</h2>
       <div class="segmented" role="radiogroup" aria-label="Rodzaj umowy" id="contract">
         <button type="button" role="radio" data-value="employment" aria-checked="true">O pracę</button>
@@ -67,6 +68,16 @@
       <p class="hint" id="contractHint"></p>
     </section>
 
+    <section class="card de-only" hidden>
+      <h2>Rodzaj pracy</h2>
+      <div class="segmented" role="radiogroup" aria-label="Rodzaj pracy w Niemczech" id="deJob">
+        <button type="button" role="radio" data-value="regular" aria-checked="true">Etat</button>
+        <button type="button" role="radio" data-value="minijob" aria-checked="false">Minijob</button>
+        <button type="button" role="radio" data-value="student" aria-checked="false">Werkstudent</button>
+      </div>
+      <p class="hint" id="deJobHint"></p>
+    </section>
+
     <section class="card">
       <h2>Wynagrodzenie</h2>
       <label class="money-label" for="gross" id="grossLabel">Brutto miesięcznie</label>
@@ -74,7 +85,7 @@
         <input id="gross" type="text" inputmode="decimal" autocomplete="off" placeholder="0" enterkeyhint="done">
         <span class="currency">zł</span>
       </div>
-      <div class="chips">
+      <div class="chips pl-only">
         <button type="button" class="chip" id="minWageChip">Płaca minimalna</button>
       </div>
 
@@ -88,7 +99,60 @@
       <p class="field-error" id="bonusError" hidden>Nie rozpoznaję tej kwoty. Wpisz np. 1000 albo 1000,50</p>
     </section>
 
-    <section class="card">
+    <section class="card de-only" hidden>
+      <h2>Twoja sytuacja</h2>
+      <div class="field-row" data-de-job="regular student">
+        <label for="deTaxClass">Klasa podatkowa <span class="de-name">(Steuerklasse)</span></label>
+        <div class="select-wrap">
+          <select id="deTaxClass">
+            <option value="1">I · osoba samotna</option>
+            <option value="2">II · samotny rodzic</option>
+            <option value="3">III · małżeństwo, wyższe zarobki</option>
+            <option value="4">IV · małżeństwo, podobne zarobki</option>
+            <option value="5">V · małżeństwo, niższe zarobki</option>
+            <option value="6">VI · druga praca</option>
+          </select>
+        </div>
+      </div>
+      <div class="field-row">
+        <label for="deState">Kraj związkowy <span class="de-name">(Bundesland)</span></label>
+        <div class="select-wrap">
+          <select id="deState"></select>
+        </div>
+      </div>
+      <div class="field-row">
+        <label for="deChildren">Liczba dzieci</label>
+        <div class="stepper">
+          <button type="button" class="step" data-kid-step="-1" aria-label="Mniej dzieci">−</button>
+          <input id="deChildren" type="number" inputmode="numeric" min="0" max="10" value="0">
+          <button type="button" class="step" data-kid-step="1" aria-label="Więcej dzieci">+</button>
+        </div>
+      </div>
+
+      <label class="toggle" data-de-job="regular student">
+        <span class="toggle-text">
+          <span class="toggle-title">Należę do Kościoła <span class="de-name">(Kirchensteuer)</span></span>
+          <span class="toggle-desc">Członkowie Kościoła katolickiego lub ewangelickiego płacą podatek kościelny: 8% podatku dochodowego w Bawarii i Badenii-Wirtembergii, 9% w pozostałych krajach.</span>
+        </span>
+        <input type="checkbox" class="switch" id="deChurch">
+      </label>
+
+      <label class="toggle" data-de-job="minijob">
+        <span class="toggle-text">
+          <span class="toggle-title">Zwolnienie ze składki emerytalnej <span class="de-name">(Befreiung)</span></span>
+          <span class="toggle-desc">Na Minijobie możesz złożyć wniosek o zwolnienie. Wtedy dostajesz całą kwotę, ale nie zbierasz okresów do emerytury.</span>
+        </span>
+        <input type="checkbox" class="switch" id="deRvExempt">
+      </label>
+
+      <div class="field-row" data-de-job="regular">
+        <label for="deHealthExtra">Dodatkowa składka kasy chorych <span class="de-name">(Zusatzbeitrag)</span></label>
+        <div class="pct-input"><input id="deHealthExtra" type="text" inputmode="decimal" autocomplete="off"><span>%</span></div>
+      </div>
+      <p class="hint" data-de-job="regular">Każda kasa chorych (np. TK, AOK, Barmer) ma własną dodatkową składkę. Wpisaną dzielisz po połowie z pracodawcą. Domyślnie średnia na 2026 rok.</p>
+    </section>
+
+    <section class="card pl-only">
       <h2>Twoja sytuacja</h2>
       <div class="badge" id="reliefBadge" hidden></div>
 
@@ -162,7 +226,7 @@
       <p class="hint hint-top" id="breakdownHint" hidden>W kolejnych miesiącach kwoty się zmieniają. Szczegóły znajdziesz niżej, w „W skali roku”.</p>
       <div class="bar" id="bar" role="img" aria-label="Podział wypłaty brutto"></div>
       <ul class="breakdown" id="breakdown"></ul>
-      <details class="steps" id="taxSteps">
+      <details class="steps pl-only" id="taxSteps">
         <summary>Jak wyliczono podatek</summary>
         <div class="steps-body" id="taxStepsBody"></div>
       </details>

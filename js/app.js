@@ -7,6 +7,8 @@ import {
 } from './engine.js';
 
 // v2: od tej wersji pole brutto startuje puste (wcześniej płaca minimalna)
+import { setupDE, renderDE } from './app-de.js';
+
 const STORAGE_KEY = 'na-reke:v2';
 const AGE_MIN = 15;
 const NO_AGE = 30; // wiek, przy którym nie działa żadna ulga zależna od wieku
@@ -469,9 +471,23 @@ function yearView(r) {
 
 // --- aktualizacja -------------------------------------------------------------------
 
+function syncCountry() {
+  const de = state.country === 'DE';
+  document.querySelectorAll('.pl-only').forEach((n) => { n.hidden = de; });
+  document.querySelectorAll('.de-only').forEach((n) => { n.hidden = !de; });
+  document.querySelectorAll('.currency').forEach((n) => { n.textContent = de ? '€' : 'zł'; });
+  return de;
+}
+
 function update() {
   const grossInput = parseMoneyInput(state.gross);
   const bonusInput = parseMoneyInput(state.bonus);
+  if (syncCountry()) {
+    $('grossLabel').textContent = 'Brutto miesięcznie';
+    renderDE({ state, grossInput, bonusInput, age: state.age >= AGE_MIN ? state.age : NO_AGE });
+    $('bonusError').hidden = bonusInput.valid;
+    return;
+  }
   const r = calculate(rawInput(grossInput, bonusInput));
   syncOptions(r);
   heroView(r, grossInput);
@@ -596,6 +612,15 @@ function setupServiceWorker() {
 function init() {
   $('yearLabel').textContent = String(P.year);
   setupAge();
+
+  state.country = 'PL';
+  const country = $('country');
+  country.value = state.country;
+  country.addEventListener('change', () => {
+    state.country = country.value;
+    update();
+  });
+  setupDE({ state, update, setupSegmented });
 
   setupSegmented($('contract'), () => state.contract, (v) => {
     state.contract = v;

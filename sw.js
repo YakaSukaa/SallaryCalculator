@@ -9,13 +9,15 @@
 // zmień VERSION poniżej — inaczej telefon zostanie przy starej wersji.
 
 const PREFIX = 'na-reke-';
-const VERSION = `${PREFIX}2026-11-24-10`;
+const VERSION = `${PREFIX}2026-11-24-13`;
 const ASSETS = [
   './',
   './index.html',
   './css/styles.css',
   './js/app.js',
   './js/engine.js',
+  './js/app-de.js',
+  './js/engine-de.js',
   './manifest.webmanifest',
   './icons/apple-touch-icon.png',
   './icons/icon-192.png',
