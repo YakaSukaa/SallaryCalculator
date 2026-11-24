@@ -10,7 +10,6 @@ import {
 const STORAGE_KEY = 'na-reke:v2';
 const AGE_MIN = 15;
 const AGE_MAX = 99;
-const UPDATE_CHECK_EVERY_MS = 60 * 60 * 1000;
 
 const DEFAULTS = {
   age: 30,
@@ -56,34 +55,14 @@ function validAge(n) {
   return Number.isInteger(n) && n >= AGE_MIN && n <= AGE_MAX;
 }
 
-function loadState() {
-  const fresh = { ...DEFAULTS, pit2: { ...DEFAULTS.pit2 } };
-  try {
-    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
-    if (!saved || typeof saved !== 'object') return fresh;
-    const s = { ...fresh, ...saved, pit2: { ...fresh.pit2, ...(saved.pit2 || {}) } };
-    if (!CONTRACTS.includes(s.contract)) s.contract = DEFAULTS.contract;
-    if (s.bonusMode !== 'once' && s.bonusMode !== 'monthly') s.bonusMode = DEFAULTS.bonusMode;
-    s.age = validAge(Number(s.age)) ? Number(s.age) : DEFAULTS.age;
-    if (typeof s.gross !== 'string') s.gross = DEFAULTS.gross;
-    if (typeof s.bonus !== 'string') s.bonus = '';
-    for (const c of CONTRACTS) s.pit2[c] = Boolean(s.pit2[c]);
-    for (const k of TOGGLES) s[k] = Boolean(s[k]);
-    return s;
-  } catch {
-    return fresh; // brak dostępu do pamięci — wartości domyślne
-  }
+// Przy każdym uruchomieniu formularz startuje od zera — niczego nie zapamiętujemy.
+try {
+  localStorage.removeItem('na-reke:v1');
+  localStorage.removeItem(STORAGE_KEY);
+} catch {
+  // brak dostępu do pamięci — bez znaczenia
 }
-
-function saveState() {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  } catch {
-    // np. tryb prywatny — kalkulator działa dalej, tylko nie zapamięta danych
-  }
-}
-
-const state = loadState();
+const state = { ...DEFAULTS, pit2: { ...DEFAULTS.pit2 } };
 
 function rawInput(gross, bonus) {
   return {
@@ -488,7 +467,6 @@ function update() {
   if (hasGross || r.bonus) yearView(r);
 
   $('bonusError').hidden = bonusInput.valid;
-  saveState();
 }
 
 // --- obsługa formularza ---------------------------------------------------------------
@@ -550,11 +528,29 @@ function setupAge() {
   });
 }
 
+// Aplikacja z ekranu początkowego iPhone'a często nie uruchamia się od nowa,
+// tylko wraca z tła. Jeśli była w tle dłużej niż minutę, przeładowujemy ją:
+// formularz startuje od zera i wczytuje się najnowsza wersja.
+const RESET_AFTER_HIDDEN_MS = 60 * 1000;
+
+function setupFreshStart() {
+  let hiddenAt = 0;
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') {
+      hiddenAt = Date.now();
+    } else if (hiddenAt && Date.now() - hiddenAt >= RESET_AFTER_HIDDEN_MS) {
+      window.location.reload();
+    }
+  });
+  window.addEventListener('pageshow', (e) => {
+    if (e.persisted) window.location.reload();
+  });
+}
+
 function setupServiceWorker() {
   if (!('serviceWorker' in navigator) || !window.isSecureContext) return;
 
   // Gdy pobierze się nowa wersja, przeładuj stronę — ale nie w trakcie pisania.
-  // Wpisane dane są zapamiętane, więc nic nie ginie.
   const hadController = Boolean(navigator.serviceWorker.controller);
   let pending = false;
   const reloadWhenIdle = () => {
@@ -574,17 +570,7 @@ function setupServiceWorker() {
   window.addEventListener('load', () => {
     navigator.serviceWorker
       .register('./sw.js', { updateViaCache: 'none' })
-      .then((reg) => {
-        // Aplikacja z ekranu początkowego często wraca z tła bez przeładowania,
-        // więc przy powrocie sami sprawdzamy, czy jest nowa wersja (najwyżej raz na godzinę).
-        let lastCheck = Date.now();
-        document.addEventListener('visibilitychange', () => {
-          if (document.visibilityState !== 'visible') return;
-          if (Date.now() - lastCheck < UPDATE_CHECK_EVERY_MS) return;
-          lastCheck = Date.now();
-          reg.update().catch(() => {});
-        });
-      })
+      .then((reg) => reg.update().catch(() => {}))
       .catch(() => {});
   });
 }
@@ -595,9 +581,6 @@ function init() {
 
   setupSegmented($('contract'), () => state.contract, (v) => {
     state.contract = v;
-  });
-  setupSegmented($('bonusMode'), () => state.bonusMode, (v) => {
-    state.bonusMode = v;
   });
 
   const gross = $('gross');
@@ -660,6 +643,7 @@ function init() {
   }
 
   setupServiceWorker();
+  setupFreshStart();
 }
 
 init();

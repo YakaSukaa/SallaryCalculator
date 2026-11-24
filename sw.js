@@ -9,7 +9,7 @@
 // zmień VERSION poniżej — inaczej telefon zostanie przy starej wersji.
 
 const PREFIX = 'na-reke-';
-const VERSION = `${PREFIX}2026-11-24-2`;
+const VERSION = `${PREFIX}2026-11-24-4`;
 const ASSETS = [
   './',
   './index.html',
@@ -45,6 +45,9 @@ self.addEventListener('activate', (event) => {
   );
 });
 
+// Najpierw internet (zawsze najnowsza wersja), a bez internetu — kopia z pamięci.
+const NETWORK_TIMEOUT_MS = 4000;
+
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   if (request.method !== 'GET') return;
@@ -55,15 +58,25 @@ self.addEventListener('fetch', (event) => {
     (async () => {
       const cache = await caches.open(VERSION);
       const key = request.mode === 'navigate' ? './index.html' : request;
-      const cached = await cache.match(key, { ignoreSearch: true });
-      if (cached) return cached;
       try {
-        return await fetch(request);
+        const response = await Promise.race([
+          fetch(request, { cache: 'no-cache' }),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), NETWORK_TIMEOUT_MS)),
+        ]);
+        if (response && response.ok) {
+          cache.put(key, response.clone());
+          return response;
+        }
+        throw new Error('bad response');
       } catch {
-        return new Response('Brak połączenia z internetem.', {
-          status: 503,
-          headers: { 'Content-Type': 'text/plain; charset=utf-8' },
-        });
+        const cached = await cache.match(key, { ignoreSearch: true });
+        return (
+          cached ||
+          new Response('Brak połączenia z internetem.', {
+            status: 503,
+            headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+          })
+        );
       }
     })(),
   );
