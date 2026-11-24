@@ -141,8 +141,6 @@ function syncOptions(r) {
     note.hidden = !exemptNow;
   }
   $('contractHint').textContent = CONTRACT_HINTS[inp.contract];
-  $('ageHint').textContent = 'Wpisz wiek: od niego zależy ulga dla młodych (do 26 lat) i dla seniorów.';
-  $('ageHint').hidden = state.age >= AGE_MIN;
   $('grossLabel').textContent = GROSS_LABELS[inp.contract];
 
   const badge = $('reliefBadge');
