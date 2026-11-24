@@ -512,9 +512,9 @@ export function calculate(rawInput, P = PARAMS_2026) {
       totals: year.totals,
       regularMonths: regularYear.months,
       regularTotals: regularYear.totals,
-      settlement: year.settlement,
+      settlement: regularYear.settlement, // rok bez premii jednorazowej
       varies,
-      notes: yearNotes(inp, year, P),
+      notes: yearNotes(inp, regularYear, P),
     },
   };
 }

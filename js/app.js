@@ -3,7 +3,6 @@ import {
   formatPLN,
   parseMoneyInput,
   PARAMS_2026 as P,
-  MONTH_NAMES,
   CONTRACTS,
 } from './engine.js';
 
@@ -125,7 +124,6 @@ function el(tag, className, text) {
   return node;
 }
 
-const capitalize = (text) => text.charAt(0).toUpperCase() + text.slice(1);
 
 // --- opcje i komunikaty o uldze --------------------------------------------------------
 
@@ -189,7 +187,8 @@ function heroView(r, grossInput) {
   const amount = $('netAmount');
   const sub = $('netSub');
   const label = $('heroLabel');
-  const shown = r.year.varies ? r.monthly.average : m.net;
+  let shown = r.year.varies ? r.monthly.average : m.net;
+  if (r.bonus) shown = r.withBonus.net; // ostateczna kwota: pensja + premia
   amount.textContent = formatPLN(shown);
   $('miniAmount').textContent = formatPLN(shown);
 
@@ -201,6 +200,12 @@ function heroView(r, grossInput) {
     return;
   }
 
+  if (r.bonus) {
+    label.textContent = 'Dostaniesz na rękę (z premią)';
+    sub.textContent = `z ${formatPLN(r.withBonus.gross)} brutto (w tym premia ${formatPLN(r.bonus.gross)}) · bez premii ${formatPLN(m.net)}`;
+    return;
+  }
+
   let grossText = `z ${formatPLN(m.gross)} brutto`;
   if (r.input.bonusMode === 'monthly' && r.input.bonus > 0) grossText += ' (z premią)';
 
@@ -208,7 +213,7 @@ function heroView(r, grossInput) {
     label.textContent = 'Średnio na rękę co miesiąc';
     sub.textContent = `${grossText} · od ${formatPLN(r.monthly.min)} do ${formatPLN(r.monthly.max)}, zależnie od miesiąca`;
   } else {
-    label.textContent = r.bonus ? 'Dostaniesz na rękę co miesiąc (bez premii)' : 'Dostaniesz na rękę co miesiąc';
+    label.textContent = 'Dostaniesz na rękę co miesiąc';
     sub.textContent = `${grossText} · zostaje Ci ${share(m.net, m.gross)}`;
   }
 }
@@ -438,8 +443,10 @@ function bonusView(r) {
 }
 
 function yearView(r) {
-  $('yearGross').textContent = formatPLN(r.year.totals.gross);
-  $('yearNet').textContent = formatPLN(r.year.totals.net);
+  // bez premii jednorazowej
+  const totals = r.year.regularTotals;
+  $('yearGross').textContent = formatPLN(totals.gross);
+  $('yearNet').textContent = formatPLN(totals.net);
 
   const s = r.year.settlement;
   const after = $('yearAfter');
@@ -447,7 +454,7 @@ function yearView(r) {
     after.hidden = false;
     after.replaceChildren(
       'Po rozliczeniu rocznym zostanie Ci około ',
-      el('strong', '', formatPLN(r.year.totals.net - s.diff)),
+      el('strong', '', formatPLN(totals.net - s.diff)),
       s.diff > 0 ? ' (po dopłacie podatku).' : ' (ze zwrotem podatku).',
     );
   } else {
@@ -475,78 +482,10 @@ function yearView(r) {
     );
   }
 
-  if (!r.year.varies && r.regular.gross > 0 && !r.bonus) {
+  if (!r.year.varies && r.regular.gross > 0) {
     notes.append(el('div', 'note', `Każdy miesiąc wygląda tak samo: ${formatPLN(r.regular.net)} na rękę.`));
   }
 
-  const tbody = $('monthsBody');
-  tbody.replaceChildren();
-  const typical = r.year.regularMonths[0].net;
-  r.year.months.forEach((m, i) => {
-    const tr = el('tr', m.net !== typical ? 'changed' : '');
-    let name = capitalize(MONTH_NAMES[i]);
-    if (i === 0 && r.bonus) name += ' (z premią)';
-    tr.append(el('td', '', name), el('td', '', formatPLN(m.gross)), el('td', '', formatPLN(m.net)));
-    tbody.append(tr);
-  });
-}
-
-function aboutView() {
-  const about = $('about');
-  about.replaceChildren();
-  about.append(el('p', '', `Liczymy według przepisów na ${P.year} rok (stan na ${P.updatedAt}).`));
-
-  const t = el('table', 'params');
-  const rows = [
-    ['Płaca minimalna', formatPLN(P.minimumWage)],
-    ['Składka emerytalna (Twoja część)', rate(P.rates.pension)],
-    ['Składka rentowa (Twoja część)', rate(P.rates.disability)],
-    ['Składka chorobowa', rate(P.rates.sickness)],
-    ['Składka zdrowotna', `${rate(P.rates.health)} (przy bardzo niskiej pensji obniżona, art. 83)`],
-    ['Roczny limit składki emerytalnej i rentowej', formatPLN(P.zusAnnualLimit)],
-    ['Podatek (skala)', `12% i 32% ponad ${formatPLN(P.taxThreshold)}`],
-    ['Kwota zmniejszająca podatek', `${formatPLN(P.monthlyTaxReduction)} miesięcznie`],
-    ['Koszty uzyskania (etat)', `${formatPLN(P.employmentCosts)} lub ${formatPLN(P.employmentCostsIncreased)}`],
-    ['Koszty (zlecenie i dzieło)', '20%, przy prawach autorskich 50%'],
-    ['Limit ulgi dla młodych i seniorów', `${formatPLN(P.reliefAnnualLimit)} rocznie`],
-    [`Umowy do ${formatPLN(P.smallContractLimit)}`, '12% od całej kwoty'],
-    ['PPK', '2% Ty, 1,5% pracodawca'],
-  ];
-  for (const [k, v] of rows) {
-    const tr = el('tr');
-    tr.append(el('td', '', k), el('td', '', v));
-    t.append(tr);
-  }
-  about.append(t);
-
-  about.append(el('h3', '', 'Założenia'));
-  const ul = el('ul');
-  [
-    'Liczymy rok kalendarzowy od stycznia, u jednego pracodawcy lub zleceniodawcy. Premię jednorazową zakładamy w styczniu.',
-    'Zlecenie i dzieło zawierasz z firmą, która nie jest Twoim pracodawcą.',
-    'Kwota na rękę to wypłata po zaliczkach na podatek. Szacunek zwrotu lub dopłaty w zeznaniu rocznym (PIT-37) dotyczy tylko tej jednej umowy, bez innych dochodów i ulg.',
-    'Umowy zlecenia i o dzieło do 200 zł: ryczałt 12% liczymy, gdy cała umowa jest na taką kwotę. Przy przeniesieniu praw autorskich ryczałtu nie ma.',
-    'Nie uwzględniamy kilku umów naraz (np. etat i zlecenie), ulg z zeznania rocznego (np. na dzieci), PIT-0 dla rodzin 4+ i powracających z zagranicy ani potrąceń komorniczych.',
-  ].forEach((text) => ul.append(el('li', '', text)));
-  about.append(ul);
-
-  about.append(el('h3', '', 'Źródła'));
-  const src = el('ul');
-  [
-    ['Ministerstwo Finansów: ulga dla młodych', 'https://www.podatki.gov.pl/ulgi/ulga-dla-mlodych-pit/'],
-    ['Ministerstwo Finansów: ulga dla pracujących seniorów', 'https://www.podatki.gov.pl/ulgi/ulga-dla-pracujacych-seniorow-pit/'],
-    ['ZUS: roczny limit składek emerytalnej i rentowej', 'https://www.zus.pl/pl/baza-wiedzy/skladki-wskazniki-odsetki/wskazniki/roczna-podstawa-wymiaru-skladek-na-ubezpieczenia-emerytalne-i-rentowe-od-1999-r'],
-    ['ZUS: minimalne i przeciętne wynagrodzenie', 'https://www.zus.pl/baza-wiedzy/skladki-wskazniki-odsetki/wskazniki/minimalne-i-przecietne-wynagrodzenie'],
-  ].forEach(([text, href]) => {
-    const li = el('li');
-    const a = el('a', '', text);
-    a.href = href;
-    a.target = '_blank';
-    a.rel = 'noopener noreferrer';
-    li.append(a);
-    src.append(li);
-  });
-  about.append(src);
 }
 
 // --- aktualizacja -------------------------------------------------------------------
@@ -718,7 +657,6 @@ function init() {
     });
   });
 
-  aboutView();
   update();
 
   // pasek z kwotą, gdy duża karta zniknie z ekranu
